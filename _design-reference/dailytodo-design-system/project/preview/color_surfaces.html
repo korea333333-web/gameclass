@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="ko"><head>
+<meta charset="utf-8">
+<title>Color · Surfaces</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body { margin:0; padding:20px 24px; }
+  .row { display:grid; grid-template-columns: repeat(5, 1fr); gap:10px; }
+  .swatch {
+    height: 84px; border-radius: 10px; padding: 10px 12px;
+    display:flex; flex-direction:column; justify-content: space-between;
+    border: 1px solid var(--hairline);
+  }
+  .name { font-size:11px; font-weight:500; letter-spacing:0.04em; text-transform:uppercase; color: var(--ink-2); }
+  .hex  { font-family: var(--font-mono); font-size:11px; color: var(--ink-3); }
+</style></head>
+<body>
+  <div class="row">
+    <div class="swatch" style="background:#ECE6DD"><span class="name">Surface 0</span><span class="hex">#ECE6DD</span></div>
+    <div class="swatch" style="background:#F2EEE8"><span class="name">Surface 1</span><span class="hex">#F2EEE8</span></div>
+    <div class="swatch" style="background:#F7F3EC"><span class="name">Surface 2</span><span class="hex">#F7F3EC</span></div>
+    <div class="swatch" style="background:#FAF7F2"><span class="name">Surface 3</span><span class="hex">#FAF7F2</span></div>
+    <div class="swatch" style="background:#FDFBF7"><span class="name">Surface 4</span><span class="hex">#FDFBF7</span></div>
+  </div>
+</body></html>

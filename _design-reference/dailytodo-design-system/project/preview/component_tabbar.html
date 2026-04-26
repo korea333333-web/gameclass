@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="ko"><head>
+<meta charset="utf-8">
+<title>Components · Tab bar & Search</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body { margin:0; padding:22px 24px; background: var(--surface-1);
+         display:flex; flex-direction:column; gap: 18px; }
+  /* Search */
+  .search {
+    background: var(--surface-3);
+    border-radius: 10px;
+    padding: 9px 12px;
+    display:flex; align-items:center; gap: 8px;
+    border: 1px solid var(--hairline-soft);
+  }
+  .search img { width: 16px; height: 16px; opacity: 0.45; }
+  .search input {
+    flex: 1; border: none; background: transparent; outline: none;
+    font-family: inherit; font-size: 14px; color: var(--ink-1);
+  }
+  .search input::placeholder { color: var(--ink-3); }
+
+  /* Tab bar */
+  .tabbar {
+    background: var(--surface-3);
+    border-radius: 14px;
+    border-top: 1px solid var(--hairline-soft);
+    display:flex; align-items:center; justify-content: space-around;
+    padding: 12px 24px;
+  }
+  .tab { display:flex; flex-direction:column; align-items:center; gap: 2px; }
+  .tab img { width: 22px; height: 22px; }
+  .tab.active img { opacity: 1; }
+  .tab:not(.active) img { opacity: 0.42; }
+  .tab .lbl { font-size: 10px; color: var(--ink-3); }
+  .tab.active .lbl { color: var(--ink-1); font-weight: 500; }
+</style></head>
+<body>
+  <div class="search">
+    <img src="../assets/icons/magnifying-glass.svg">
+    <input placeholder="검색">
+  </div>
+  <div class="tabbar">
+    <div class="tab active">
+      <img src="../assets/icons/calendar-blank.svg">
+      <span class="lbl">캘린더</span>
+    </div>
+    <div class="tab">
+      <img src="../assets/icons/gear.svg">
+      <span class="lbl">설정</span>
+    </div>
+  </div>
+</body></html>

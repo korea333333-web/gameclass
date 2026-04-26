@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="ko"><head>
+<meta charset="utf-8">
+<title>Icons · Library</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body { margin:0; padding:18px 22px; background: var(--surface-1); }
+  h4 { margin: 0 0 12px 0; font-size: 11px; font-weight: 500; letter-spacing: 0.06em;
+       text-transform: uppercase; color: var(--ink-2); }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 8px;
+  }
+  .icon-cell {
+    aspect-ratio: 1;
+    background: var(--surface-3);
+    border: 1px solid var(--hairline);
+    border-radius: 10px;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 4px;
+    color: var(--ink-1);
+  }
+  .icon-cell img { width: 22px; height: 22px; }
+  .icon-cell .name {
+    font-family: var(--font-mono); font-size: 9px;
+    color: var(--ink-3); letter-spacing: -0.01em;
+  }
+</style></head>
+<body>
+  <h4>Phosphor · regular · 24/24 grid</h4>
+  <div class="grid">
+    <div class="icon-cell"><img src="../assets/icons/list.svg"><span class="name">list</span></div>
+    <div class="icon-cell"><img src="../assets/icons/calendar-blank.svg"><span class="name">calendar</span></div>
+    <div class="icon-cell"><img src="../assets/icons/gear.svg"><span class="name">gear</span></div>
+    <div class="icon-cell"><img src="../assets/icons/plus.svg"><span class="name">plus</span></div>
+    <div class="icon-cell"><img src="../assets/icons/pencil-simple.svg"><span class="name">pencil</span></div>
+    <div class="icon-cell"><img src="../assets/icons/check.svg"><span class="name">check</span></div>
+    <div class="icon-cell"><img src="../assets/icons/x.svg"><span class="name">x</span></div>
+    <div class="icon-cell"><img src="../assets/icons/trash.svg"><span class="name">trash</span></div>
+
+    <div class="icon-cell"><img src="../assets/icons/magnifying-glass.svg"><span class="name">search</span></div>
+    <div class="icon-cell"><img src="../assets/icons/camera.svg"><span class="name">camera</span></div>
+    <div class="icon-cell"><img src="../assets/icons/bell.svg"><span class="name">bell</span></div>
+    <div class="icon-cell"><img src="../assets/icons/lock-simple.svg"><span class="name">lock</span></div>
+    <div class="icon-cell"><img src="../assets/icons/flashlight.svg"><span class="name">flashlight</span></div>
+    <div class="icon-cell"><img src="../assets/icons/dots-three.svg"><span class="name">dots</span></div>
+    <div class="icon-cell"><img src="../assets/icons/arrow-right.svg"><span class="name">arrow</span></div>
+    <div class="icon-cell"><img src="../assets/icons/caret-right.svg"><span class="name">caret</span></div>
+  </div>
+</body></html>

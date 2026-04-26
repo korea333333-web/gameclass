@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" width="192" height="192">
+  <rect width="192" height="192" rx="40" fill="#F2EEE8"/>
+  <rect x="32" y="32" width="128" height="128" rx="20" fill="#FAF7F2" stroke="#3D3530" stroke-opacity="0.10"/>
+  <text x="96" y="118" text-anchor="middle" font-family="-apple-system, 'Pretendard Variable', system-ui, sans-serif" font-size="64" font-weight="500" fill="#3D3530" letter-spacing="-2">G</text>
+  <circle cx="96" cy="50" r="3" fill="#A89E94"/>
+</svg>

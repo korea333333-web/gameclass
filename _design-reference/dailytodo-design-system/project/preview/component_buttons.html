@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="ko"><head>
+<meta charset="utf-8">
+<title>Components · Buttons</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body { margin:0; padding:22px 24px; background: var(--surface-1);
+         display:flex; flex-direction: column; gap: 14px; }
+  .row { display:flex; align-items:center; gap: 12px; }
+  .label { font-family: var(--font-mono); font-size: 11px; color: var(--ink-3); width: 90px; flex-shrink: 0; }
+
+  .btn-card {
+    background: var(--surface-3);
+    border: 1px solid var(--hairline-strong);
+    border-radius: 10px;
+    padding: 9px 18px;
+    font-size: 14px; font-weight: 500;
+    color: var(--ink-1);
+    cursor: pointer;
+  }
+  .btn-text {
+    background: transparent; border: none;
+    font-size: 13px; color: var(--ink-2);
+    padding: 6px 8px;
+    cursor: pointer;
+  }
+  .fab {
+    width: 44px; height: 44px; border-radius: 50%;
+    background: var(--surface-3);
+    border: 1px solid var(--hairline);
+    box-shadow: var(--shadow-fab);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .fab img { width: 22px; height: 22px; }
+  .icon-btn {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: var(--surface-2);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .icon-btn img { width: 18px; height: 18px; opacity: 0.6; }
+</style></head>
+<body>
+  <div class="row">
+    <span class="label">card btn</span>
+    <button class="btn-card">앱 열기</button>
+    <button class="btn-card">할 일 추가</button>
+  </div>
+  <div class="row">
+    <span class="label">text</span>
+    <button class="btn-text">편집</button>
+    <button class="btn-text">간략히 보기</button>
+    <button class="btn-text">취소</button>
+  </div>
+  <div class="row">
+    <span class="label">fab · icon</span>
+    <div class="fab"><img src="../assets/icons/plus.svg"></div>
+    <div class="icon-btn"><img src="../assets/icons/camera.svg"></div>
+    <div class="icon-btn"><img src="../assets/icons/magnifying-glass.svg"></div>
+  </div>
+</body></html>

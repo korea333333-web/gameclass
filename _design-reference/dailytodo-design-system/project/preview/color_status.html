@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="ko"><head>
+<meta charset="utf-8">
+<title>Color · Status marks</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body { margin:0; padding:24px; background: var(--surface-1); }
+  .row { display:grid; grid-template-columns: repeat(4, 1fr); gap:10px; }
+  .cell {
+    background: var(--surface-3);
+    border-radius: 12px; padding: 14px 16px;
+    border: 1px solid var(--hairline);
+    display:flex; flex-direction: column; gap: 6px;
+  }
+  .top { display:flex; align-items: baseline; justify-content: space-between; }
+  .mark { font-size: 28px; font-weight: 400; line-height: 1; }
+  .label { font-size:13px; color: var(--ink-1); font-weight:500; }
+  .hex { font-family: var(--font-mono); font-size:11px; color: var(--ink-3); }
+</style></head>
+<body>
+  <div class="row">
+    <div class="cell"><div class="top"><span class="label">완료 · O</span><span class="mark" style="color:#6E635B">O</span></div><span class="hex">#6E635B · status-done</span></div>
+    <div class="cell"><div class="top"><span class="label">못 함 · X</span><span class="mark" style="color:#B5483A">X</span></div><span class="hex">#B5483A · status-miss</span></div>
+    <div class="cell"><div class="top"><span class="label">일부 · △</span><span class="mark" style="color:#A89E94">△</span></div><span class="hex">#A89E94 · status-partial</span></div>
+    <div class="cell"><div class="top"><span class="label">연기 · →</span><span class="mark" style="color:#A89E94">→</span></div><span class="hex">#A89E94 · status-defer</span></div>
+  </div>
+</body></html>

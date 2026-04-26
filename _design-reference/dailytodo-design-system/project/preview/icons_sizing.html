@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="ko"><head>
+<meta charset="utf-8">
+<title>Icons · Sizing & Color</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body { margin:0; padding:20px 24px; background: var(--surface-1);
+         display:flex; flex-direction: column; gap: 14px; }
+  .section { display:flex; align-items: center; gap: 16px; }
+  .label { font-family: var(--font-mono); font-size: 11px; color: var(--ink-3); width: 96px; flex-shrink: 0; }
+  .item { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .item .spec { font-family: var(--font-mono); font-size: 10px; color: var(--ink-3); }
+  .row { display:flex; gap: 18px; align-items: flex-end; }
+  img.ink-1 { filter: brightness(0) saturate(100%) invert(20%) sepia(7%) saturate(890%) hue-rotate(2deg); }
+  img.ink-2 { opacity: 0.6; }
+  img.ink-3 { opacity: 0.42; }
+  .accent { color: #B5483A; }
+</style></head>
+<body>
+  <div class="section">
+    <span class="label">sizing</span>
+    <div class="row">
+      <div class="item"><img src="../assets/icons/calendar-blank.svg" style="width:14px;height:14px"><span class="spec">14 · xs</span></div>
+      <div class="item"><img src="../assets/icons/calendar-blank.svg" style="width:16px;height:16px"><span class="spec">16 · sm</span></div>
+      <div class="item"><img src="../assets/icons/calendar-blank.svg" style="width:20px;height:20px"><span class="spec">20 · md</span></div>
+      <div class="item"><img src="../assets/icons/calendar-blank.svg" style="width:24px;height:24px"><span class="spec">24 · lg</span></div>
+      <div class="item"><img src="../assets/icons/calendar-blank.svg" style="width:28px;height:28px"><span class="spec">28 · xl</span></div>
+    </div>
+  </div>
+  <div class="section">
+    <span class="label">color</span>
+    <div class="row">
+      <div class="item"><img src="../assets/icons/gear.svg" style="width:24px;height:24px;color:#3D3530"><span class="spec">ink-1</span></div>
+      <div class="item"><img src="../assets/icons/gear.svg" style="width:24px;height:24px" class="ink-2"><span class="spec">ink-2</span></div>
+      <div class="item"><img src="../assets/icons/gear.svg" style="width:24px;height:24px" class="ink-3"><span class="spec">ink-3</span></div>
+      <div class="item">
+        <span style="display:inline-block;width:24px;height:24px;color:#B5483A;">
+          <svg viewBox="0 0 256 256" fill="currentColor"><path d="M216,48H180V40a24,24,0,0,0-24-24H100A24,24,0,0,0,76,40v8H40a8,8,0,0,0,0,16h8V208a16,16,0,0,0,16,16H192a16,16,0,0,0,16-16V64h8a8,8,0,0,0,0-16ZM92,40a8,8,0,0,1,8-8h56a8,8,0,0,1,8,8v8H92Zm100,168H64V64H192ZM112,104v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Zm48,0v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Z"/></svg>
+        </span>
+        <span class="spec accent">warn</span>
+      </div>
+    </div>
+  </div>
+</body></html>

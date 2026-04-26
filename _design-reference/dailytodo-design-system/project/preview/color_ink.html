@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="ko"><head>
+<meta charset="utf-8">
+<title>Color · Ink</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body { margin:0; padding:20px 24px; background: var(--surface-1); }
+  .row { display:grid; grid-template-columns: repeat(5, 1fr); gap:10px; }
+  .swatch {
+    height: 84px; border-radius: 10px; padding: 10px 12px;
+    display:flex; flex-direction:column; justify-content: space-between;
+    background: var(--surface-3); border: 1px solid var(--hairline);
+  }
+  .dot { width: 36px; height: 36px; border-radius: 50%; }
+  .name { font-size:11px; font-weight:500; letter-spacing:0.04em; text-transform:uppercase; color: var(--ink-2); }
+  .hex  { font-family: var(--font-mono); font-size:11px; color: var(--ink-3); }
+  .top { display:flex; justify-content: space-between; align-items: flex-start; }
+</style></head>
+<body>
+  <div class="row">
+    <div class="swatch"><div class="top"><span class="name">Ink 1</span><div class="dot" style="background:#3D3530"></div></div><span class="hex">#3D3530 · primary</span></div>
+    <div class="swatch"><div class="top"><span class="name">Ink 2</span><div class="dot" style="background:#6E635B"></div></div><span class="hex">#6E635B · secondary</span></div>
+    <div class="swatch"><div class="top"><span class="name">Ink 3</span><div class="dot" style="background:#A89E94"></div></div><span class="hex">#A89E94 · muted</span></div>
+    <div class="swatch"><div class="top"><span class="name">Ink 4</span><div class="dot" style="background:#C9C0B5"></div></div><span class="hex">#C9C0B5 · placeholder</span></div>
+    <div class="swatch"><div class="top"><span class="name">Ink 5</span><div class="dot" style="background:#E2DBD0"></div></div><span class="hex">#E2DBD0 · disabled</span></div>
+  </div>
+</body></html>

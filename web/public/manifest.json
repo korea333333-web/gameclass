@@ -1,0 +1,32 @@
+{
+  "name": "GameClass",
+  "short_name": "GameClass",
+  "description": "광운대 정고원 게임학과 학사 + 팀프로젝트 협업 PWA",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F2EEE8",
+  "theme_color": "#F2EEE8",
+  "orientation": "portrait",
+  "lang": "ko",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/icons/app-icon-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/app-icon-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/app-icon-maskable.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}

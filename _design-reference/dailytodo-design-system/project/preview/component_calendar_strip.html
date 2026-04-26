@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="ko"><head>
+<meta charset="utf-8">
+<title>Components · Calendar strip</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body { margin:0; padding:22px 24px; background: var(--surface-1); }
+  .strip { display:grid; grid-template-columns: repeat(7, 1fr); gap: 0; text-align:center; }
+  .day-of-week { font-size: 11px; color: var(--ink-3); padding: 2px 0; }
+  .day {
+    font-size: 17px; font-weight: 400; color: var(--ink-1);
+    padding: 10px 0;
+    position: relative;
+    display:flex; flex-direction:column; align-items:center; gap: 4px;
+  }
+  .day.selected .num {
+    background: var(--ink-1); color: var(--surface-3);
+    width: 32px; height: 32px; border-radius: 50%;
+    display: inline-flex; align-items:center; justify-content:center;
+  }
+  .day .num { width: 32px; height: 32px; display:inline-flex; align-items:center; justify-content:center; }
+  .day .dot {
+    width: 4px; height: 4px; border-radius: 50%;
+    background: var(--ink-3);
+  }
+  .day.empty .dot { visibility: hidden; }
+</style></head>
+<body>
+  <div class="strip">
+    <span class="day-of-week">일</span>
+    <span class="day-of-week">월</span>
+    <span class="day-of-week">화</span>
+    <span class="day-of-week">수</span>
+    <span class="day-of-week">목</span>
+    <span class="day-of-week">금</span>
+    <span class="day-of-week">토</span>
+  </div>
+  <div class="strip">
+    <div class="day"><span class="num">9</span><span class="dot"></span></div>
+    <div class="day selected"><span class="num">10</span><span class="dot"></span></div>
+    <div class="day"><span class="num">11</span><span class="dot"></span></div>
+    <div class="day empty"><span class="num">12</span><span class="dot"></span></div>
+    <div class="day"><span class="num">13</span><span class="dot"></span></div>
+    <div class="day"><span class="num">14</span><span class="dot"></span></div>
+    <div class="day"><span class="num">15</span><span class="dot"></span></div>
+  </div>
+</body></html>

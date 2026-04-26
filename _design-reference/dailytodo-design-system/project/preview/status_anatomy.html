@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="ko"><head>
+<meta charset="utf-8">
+<title>Status marks · Anatomy</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body { margin:0; padding:20px 24px; background: var(--surface-1); }
+  .card {
+    background: var(--surface-3);
+    border-radius: 14px;
+    border: 1px solid var(--hairline);
+    overflow: hidden;
+  }
+  .row {
+    display:flex; align-items:center; justify-content: space-between;
+    padding: 14px 16px;
+    border-top: 1px solid var(--hairline-soft);
+  }
+  .row:first-child { border-top: none; }
+  .task { font-size: 14px; }
+  .prefix { color: var(--ink-3); font-weight: 400; }
+  .body   { color: var(--ink-1); font-weight: 500; }
+  .mark { font-size: 16px; font-weight: 400; }
+</style></head>
+<body>
+  <div class="card">
+    <div class="row">
+      <span class="task"><span class="prefix">(독서)</span> <span class="body">도서관에서 책 빌리기</span></span>
+      <span class="mark" style="color:#6E635B">O</span>
+    </div>
+    <div class="row">
+      <span class="task"><span class="prefix">(영어)</span> <span class="body">영어단어 DAY 16 암기</span></span>
+      <span class="mark" style="color:#B5483A">X</span>
+    </div>
+    <div class="row">
+      <span class="task"><span class="prefix">(영어)</span> <span class="body">6월 모의고사 풀고 오답 정리</span></span>
+      <span class="mark" style="color:#A89E94">△</span>
+    </div>
+    <div class="row">
+      <span class="task"><span class="prefix">(국어)</span> <span class="body">2019년 6월 모의고사 풀고 오답 정리</span></span>
+      <span class="mark" style="color:#A89E94">→</span>
+    </div>
+  </div>
+</body></html>
