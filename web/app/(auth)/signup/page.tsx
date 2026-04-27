@@ -144,7 +144,7 @@ export default function SignupPage() {
           />
           <p className="dt-caps mb-3">GAMECLASS</p>
           <h1 className="dt-h1 mb-2">
-            {step === "identity" ? "처음 사용하시나요" : "비밀번호 설정"}
+            {step === "identity" ? "신규 가입" : "비밀번호 설정"}
           </h1>
           <p className="dt-secondary">
             {step === "identity"
@@ -250,7 +250,7 @@ export default function SignupPage() {
             </button>
 
             <p className="dt-meta mt-6 text-center">
-              이미 비밀번호를 만드셨나요?{" "}
+              이미 가입하셨나요?{" "}
               <Link href="/login" className="dt-btn-text inline">
                 로그인
               </Link>

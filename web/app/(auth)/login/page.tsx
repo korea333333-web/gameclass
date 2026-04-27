@@ -153,7 +153,7 @@ function LoginPageInner() {
         <p className="dt-meta mt-8 text-center">
           처음 사용하시나요?{" "}
           <Link href="/signup" className="dt-btn-text inline">
-            비밀번호 만들기
+            신규 가입
           </Link>
         </p>
         <p className="dt-meta mt-2 text-center">
