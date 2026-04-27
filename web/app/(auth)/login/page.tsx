@@ -159,6 +159,14 @@ function LoginPageInner() {
         <p className="dt-meta mt-2 text-center">
           비밀번호를 잊으셨다면 학과 운영자에게 문의해 주세요
         </p>
+
+        <hr className="dt-hairline mt-10 mb-5" />
+
+        <p className="dt-meta text-center" style={{ color: "var(--color-ink-3)" }}>
+          <Link href="/admin/login" className="dt-btn-text inline">
+            관리자 로그인 →
+          </Link>
+        </p>
       </main>
     </div>
   );
