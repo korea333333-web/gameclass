@@ -6,11 +6,13 @@ import { NextResponse, type NextRequest } from "next/server";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { createAdminClient } from "@/lib/supabase/admin";
 
-const LINE_PATTERN = /^\s*(\d{7,8})\s*[,\t\s]\s*([가-힣a-zA-Z]{2,10})\s*$/;
+const STUDENT_ID_PATTERN = /^\d{7,8}$/;
 
 type ParsedRow = { studentId: string; name: string };
 type SkippedRow = { line: string; reason: string };
 
+// 모든 종류의 공백/구분자(일반 공백, 탭, NBSP, 콤마, 다중 공백 등)를 관대하게 처리.
+// 첫 토큰이 학번(7~8자리 숫자), 나머지 합쳐서 이름.
 function parseLines(text: string): {
   rows: ParsedRow[];
   skipped: SkippedRow[];
@@ -20,17 +22,50 @@ function parseLines(text: string): {
   const seen = new Set<string>();
 
   for (const raw of text.split(/\r?\n/)) {
-    const line = raw.trim();
+    // 일반 trim + NBSP / Zero-width space 제거
+    const line = raw
+      .replace(/ /g, " ")
+      .replace(/[​-‍﻿]/g, "")
+      .trim();
     if (!line) continue;
-    const m = line.match(LINE_PATTERN);
-    if (!m) {
-      skipped.push({ line, reason: "형식 오류 (학번 이름)" });
+
+    // 한글 NFD → NFC 정규화 (Mac 클립보드 호환)
+    const normalized = line.normalize("NFC");
+
+    // 공백/탭/콤마/세미콜론으로 split
+    const parts = normalized
+      .split(/[\s,;\t]+/)
+      .map((p) => p.trim())
+      .filter(Boolean);
+    if (parts.length < 2) {
+      skipped.push({ line: normalized, reason: "토큰 부족 (학번 + 이름 필요)" });
       continue;
     }
-    const studentId = m[1];
-    const name = m[2].trim();
+
+    const studentId = parts[0];
+    if (!STUDENT_ID_PATTERN.test(studentId)) {
+      skipped.push({
+        line: normalized,
+        reason: `학번 형식 오류: ${studentId}`,
+      });
+      continue;
+    }
+
+    // 이름은 나머지 토큰을 모두 이어붙임 (성과 이름 사이 공백 허용)
+    const name = parts.slice(1).join("");
+    if (name.length < 2 || name.length > 10) {
+      skipped.push({
+        line: normalized,
+        reason: `이름 길이 오류: "${name}" (${name.length}자)`,
+      });
+      continue;
+    }
+
     if (seen.has(studentId)) {
-      skipped.push({ line, reason: "같은 입력에서 중복 학번" });
+      skipped.push({
+        line: normalized,
+        reason: "같은 입력에서 중복 학번",
+      });
       continue;
     }
     seen.add(studentId);
