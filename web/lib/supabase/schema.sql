@@ -22,6 +22,37 @@ create table if not exists public.roster (
   updated_at timestamptz not null default now()
 );
 
+-- 기존 테이블의 옛 check 제약 정리 후 새 제약 적용 (멱등)
+do $$
+declare r record;
+begin
+  for r in
+    select conname from pg_constraint
+    where conrelid = 'public.roster'::regclass
+      and contype = 'c'
+      and pg_get_constraintdef(oid) like '%student_id%'
+  loop
+    execute 'alter table public.roster drop constraint ' || quote_ident(r.conname);
+  end loop;
+
+  for r in
+    select conname from pg_constraint
+    where conrelid = 'public.roster'::regclass
+      and contype = 'c'
+      and pg_get_constraintdef(oid) like '%name%'
+  loop
+    execute 'alter table public.roster drop constraint ' || quote_ident(r.conname);
+  end loop;
+end $$;
+
+alter table public.roster
+  add constraint roster_student_id_check
+    check (student_id ~ '^\d{7,10}$');
+
+alter table public.roster
+  add constraint roster_name_check
+    check (char_length(name) between 2 and 10);
+
 alter table public.roster enable row level security;
 
 -- -------------------------------------------------------------------------
