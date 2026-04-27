@@ -95,8 +95,8 @@ function LoginPageInner() {
               id="studentId"
               type="text"
               inputMode="numeric"
-              pattern="\d{7,8}"
-              maxLength={8}
+              pattern="\d{7,10}"
+              maxLength={10}
               autoComplete="username"
               autoFocus
               required

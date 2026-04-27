@@ -15,7 +15,7 @@
 -- 1. roster — 사전 등록 명단 (어드민 화이트리스트)
 -- -------------------------------------------------------------------------
 create table if not exists public.roster (
-  student_id text primary key check (student_id ~ '^\d{7,8}$'),
+  student_id text primary key check (student_id ~ '^\d{7,10}$'),
   name text not null check (char_length(name) between 2 and 10),
   note text,
   created_at timestamptz not null default now(),
@@ -60,7 +60,7 @@ alter table public.profiles
 alter table public.profiles drop constraint if exists profiles_student_id_check;
 alter table public.profiles
   add constraint profiles_student_id_check
-    check (student_id is null or student_id ~ '^\d{7,8}$');
+    check (student_id is null or student_id ~ '^\d{7,10}$');
 
 alter table public.profiles drop constraint if exists profiles_name_check;
 alter table public.profiles

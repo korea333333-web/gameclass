@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
   }
 
   const studentId = (body.studentId ?? "").trim();
-  if (!/^\d{7,8}$/.test(studentId)) {
+  if (!/^\d{7,10}$/.test(studentId)) {
     return NextResponse.json({ error: "invalid_student_id" }, { status: 400 });
   }
 

@@ -6,7 +6,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { createAdminClient } from "@/lib/supabase/admin";
 
-const STUDENT_ID_PATTERN = /^\d{7,8}$/;
+const STUDENT_ID_PATTERN = /^\d{7,10}$/;
 
 type ParsedRow = { studentId: string; name: string };
 type SkippedRow = { line: string; reason: string };

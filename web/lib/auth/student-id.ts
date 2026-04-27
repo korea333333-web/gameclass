@@ -7,9 +7,9 @@
 
 export const FAKE_EMAIL_DOMAIN = "gameclass.local";
 
-const STUDENT_ID_PATTERN = /^\d{7,8}$/;
+const STUDENT_ID_PATTERN = /^\d{7,10}$/;
 
-export const STUDENT_ID_INVALID_ERROR = "학번은 7~8자리 숫자여야 합니다";
+export const STUDENT_ID_INVALID_ERROR = "학번은 7~10자리 숫자여야 합니다";
 export const NAME_INVALID_ERROR = "이름은 2~10자 사이여야 합니다";
 export const PASSWORD_LENGTH_ERROR = "비밀번호는 8자 이상이어야 합니다";
 export const PASSWORD_LETTER_ERROR = "비밀번호에 영문자를 1개 이상 포함해야 합니다";
@@ -33,7 +33,7 @@ export function studentIdToEmail(studentId: string): string {
 }
 
 export function emailToStudentId(email: string): string | null {
-  const m = email.match(/^(\d{7,8})@gameclass\.local$/i);
+  const m = email.match(/^(\d{7,10})@gameclass\.local$/i);
   return m ? m[1] : null;
 }
 
@@ -45,7 +45,7 @@ export function validatePassword(pw: string): string | null {
 }
 
 export function sanitizeStudentId(raw: string): string {
-  return raw.replace(/\D/g, "").slice(0, 8);
+  return raw.replace(/\D/g, "").slice(0, 10);
 }
 
 export function sanitizeName(raw: string): string {
