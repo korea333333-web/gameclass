@@ -1,8 +1,13 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const PUBLIC_PATHS = ["/login", "/signup", "/admin/login"];
-const PUBLIC_PREFIXES = ["/_next", "/icons", "/api/signup"];
+const PUBLIC_PATHS = ["/login", "/signup", "/pending", "/admin/login"];
+const PUBLIC_PREFIXES = [
+  "/_next",
+  "/icons",
+  "/api/signup",
+  "/api/telegram",
+];
 
 function isPublicPath(pathname: string): boolean {
   if (PUBLIC_PATHS.includes(pathname)) return true;
@@ -62,6 +67,7 @@ export async function updateSession(request: NextRequest) {
   }
 
   // 인증됨 + /login 또는 /signup 접근 → /
+  // (/pending은 승인 대기 페이지 자체이므로 redirect 안 함)
   if (user && (pathname === "/login" || pathname === "/signup")) {
     const url = request.nextUrl.clone();
     url.pathname = "/";

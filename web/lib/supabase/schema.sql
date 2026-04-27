@@ -34,11 +34,16 @@ create table if not exists public.profiles (
   name text check (char_length(name) between 2 and 10),
   grade smallint check (grade between 1 and 4),
   role text not null default 'student' check (role in ('student', 'admin')),
+  is_active boolean not null default false,
   avatar_url text,
   xp integer not null default 0 check (xp >= 0),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+-- 기존 테이블에 컬럼이 없으면 추가 (멱등)
+alter table public.profiles
+  add column if not exists is_active boolean not null default false;
 
 alter table public.profiles enable row level security;
 
@@ -129,50 +134,7 @@ grant execute on function public.verify_roster(text, text) to anon, authenticate
 --    학번/이름은 roster에서 가져와 자동 채움
 --    호출자는 인증된 본인만 가능
 -- -------------------------------------------------------------------------
-create or replace function public.handle_new_student(
-  p_student_id text,
-  p_name text
-) returns void
-language plpgsql
-security definer
-set search_path = public
-as $$
-declare
-  v_uid uuid := auth.uid();
-begin
-  if v_uid is null then
-    raise exception 'unauthenticated';
-  end if;
-
-  -- roster 매칭 재확인 (이중 검증)
-  if not exists (
-    select 1 from public.roster
-    where student_id = p_student_id and name = p_name
-  ) then
-    raise exception 'not_in_roster';
-  end if;
-
-  -- 이미 다른 학번으로 등록된 사용자인지 체크
-  if exists (
-    select 1 from public.profiles where id = v_uid
-  ) then
-    raise exception 'already_registered';
-  end if;
-
-  -- 학번 중복(다른 사용자) 체크
-  if exists (
-    select 1 from public.profiles where student_id = p_student_id
-  ) then
-    raise exception 'student_id_taken';
-  end if;
-
-  insert into public.profiles (id, student_id, name, role)
-  values (v_uid, p_student_id, p_name, 'student');
-end;
-$$;
-
-revoke all on function public.handle_new_student(text, text) from public;
-grant execute on function public.handle_new_student(text, text) to authenticated;
+-- (handle_new_student RPC는 더 이상 사용하지 않습니다 — signup API route에서 직접 처리)
 
 -- -------------------------------------------------------------------------
 -- 8. updated_at 자동 갱신 트리거

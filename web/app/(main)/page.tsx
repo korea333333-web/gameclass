@@ -16,18 +16,16 @@ export default async function HomePage() {
     data: { user },
   } = await supabase.auth.getUser();
 
+  // 인증/승인/어드민 체크는 (main)/layout에서 이미 처리됨
   if (!user) redirect("/login");
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("name, grade, role")
+    .select("name, grade")
     .eq("id", user.id)
     .maybeSingle();
 
-  // 어드민은 학생 영역 대신 관리 화면으로
-  if (profile?.role === "admin") redirect("/admin");
-
-  // 프로필/학년 미작성 시 프로필 페이지로
+  // 가입 흐름에서 grade를 받으므로 비어있을 일은 없지만, 안전장치
   if (!profile || !profile.grade) redirect("/profile");
 
   const today = new Date();

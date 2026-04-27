@@ -2,6 +2,8 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Navigation } from "@/components/navigation";
 
+export const dynamic = "force-dynamic";
+
 export default async function MainLayout({
   children,
 }: {
@@ -12,9 +14,25 @@ export default async function MainLayout({
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) {
-    redirect("/login");
+  if (!user) redirect("/login");
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role, is_active")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  // 프로필이 없는 비정상 상태 → 가입으로
+  if (!profile) {
+    await supabase.auth.signOut();
+    redirect("/signup");
   }
+
+  // 어드민은 학생 영역 대신 관리 화면으로
+  if (profile.role === "admin") redirect("/admin");
+
+  // 승인되지 않은 학생은 대기 화면으로
+  if (!profile.is_active) redirect("/pending");
 
   return (
     <div
