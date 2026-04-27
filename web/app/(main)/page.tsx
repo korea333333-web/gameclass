@@ -18,14 +18,17 @@ export default async function HomePage() {
 
   if (!user) redirect("/login");
 
-  // 프로필 미작성 시 프로필 페이지로
   const { data: profile } = await supabase
     .from("profiles")
-    .select("name, grade")
+    .select("name, grade, role")
     .eq("id", user.id)
     .maybeSingle();
 
-  if (!profile) redirect("/profile");
+  // 어드민은 학생 영역 대신 관리 화면으로
+  if (profile?.role === "admin") redirect("/admin");
+
+  // 프로필/학년 미작성 시 프로필 페이지로
+  if (!profile || !profile.grade) redirect("/profile");
 
   const today = new Date();
 

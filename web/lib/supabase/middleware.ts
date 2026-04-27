@@ -1,14 +1,18 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const PUBLIC_PATHS = ["/login", "/auth/callback"];
-const PUBLIC_PREFIXES = ["/_next", "/icons", "/auth"];
+const PUBLIC_PATHS = ["/login", "/signup", "/admin/login"];
+const PUBLIC_PREFIXES = ["/_next", "/icons", "/api/signup"];
 
 function isPublicPath(pathname: string): boolean {
   if (PUBLIC_PATHS.includes(pathname)) return true;
   if (PUBLIC_PREFIXES.some((p) => pathname.startsWith(p))) return true;
   if (pathname === "/manifest.json" || pathname === "/favicon.ico") return true;
   return false;
+}
+
+function isAdminArea(pathname: string): boolean {
+  return pathname.startsWith("/admin") && pathname !== "/admin/login";
 }
 
 export async function updateSession(request: NextRequest) {
@@ -42,6 +46,13 @@ export async function updateSession(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   const publicPath = isPublicPath(pathname);
 
+  // 미인증 + 어드민 영역 → 어드민 로그인으로
+  if (!user && isAdminArea(pathname)) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/admin/login";
+    return NextResponse.redirect(url);
+  }
+
   // 미인증 + 보호 경로 → /login
   if (!user && !publicPath) {
     const url = request.nextUrl.clone();
@@ -50,8 +61,8 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // 인증됨 + /login 접근 → /
-  if (user && pathname === "/login") {
+  // 인증됨 + /login 또는 /signup 접근 → /
+  if (user && (pathname === "/login" || pathname === "/signup")) {
     const url = request.nextUrl.clone();
     url.pathname = "/";
     return NextResponse.redirect(url);

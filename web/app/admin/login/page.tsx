@@ -1,62 +1,66 @@
 "use client";
 
-import Image from "next/image";
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState, type FormEvent } from "react";
 import { createClient } from "@/lib/supabase/client";
-import {
-  isValidStudentId,
-  sanitizeStudentId,
-  studentIdToEmail,
-  STUDENT_ID_INVALID_ERROR,
-  SIGNIN_FAILED_ERROR,
-} from "@/lib/auth/student-id";
 
 type Status =
   | { kind: "idle" }
   | { kind: "loading" }
   | { kind: "error"; message: string };
 
-export default function LoginPage() {
+export default function AdminLoginPage() {
   return (
     <Suspense fallback={null}>
-      <LoginPageInner />
+      <AdminLoginPageInner />
     </Suspense>
   );
 }
 
-function LoginPageInner() {
+function AdminLoginPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const fromPath = searchParams.get("from") || "/";
+  const fromPath = searchParams.get("from") || "/admin";
 
-  const [studentId, setStudentId] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [status, setStatus] = useState<Status>({ kind: "idle" });
 
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-
-    if (!isValidStudentId(studentId)) {
-      setStatus({ kind: "error", message: STUDENT_ID_INVALID_ERROR });
-      return;
-    }
-    if (password.length === 0) {
-      setStatus({ kind: "error", message: "비밀번호를 입력해 주세요" });
+    if (!email.trim() || !password) {
+      setStatus({ kind: "error", message: "이메일과 비밀번호를 입력해 주세요" });
       return;
     }
 
     setStatus({ kind: "loading" });
     const supabase = createClient();
-    const { error } = await supabase.auth.signInWithPassword({
-      email: studentIdToEmail(studentId),
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: email.trim(),
       password,
     });
 
-    if (error) {
-      // 학번 존재 여부를 노출하지 않기 위해 통합 메시지
-      setStatus({ kind: "error", message: SIGNIN_FAILED_ERROR });
+    if (error || !data.user) {
+      setStatus({
+        kind: "error",
+        message: "이메일 또는 비밀번호가 일치하지 않습니다",
+      });
+      return;
+    }
+
+    // 어드민 권한 확인
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", data.user.id)
+      .maybeSingle();
+
+    if (profile?.role !== "admin") {
+      await supabase.auth.signOut();
+      setStatus({
+        kind: "error",
+        message: "어드민 권한이 없는 계정입니다",
+      });
       return;
     }
 
@@ -71,39 +75,26 @@ function LoginPageInner() {
     >
       <main className="w-full max-w-sm">
         <header className="mb-10 text-center">
-          <Image
-            src="/login-hero.png"
-            alt=""
-            width={280}
-            height={170}
-            className="mx-auto mb-6"
-            priority
-          />
-          <p className="dt-caps mb-3">GAMECLASS</p>
-          <h1 className="dt-h1 mb-2">로그인</h1>
-          <p className="dt-secondary">
-            광운대 정고원 게임학과 학생만 사용할 수 있습니다
-          </p>
+          <p className="dt-caps mb-3">GAMECLASS · ADMIN</p>
+          <h1 className="dt-h1 mb-2">관리자 로그인</h1>
+          <p className="dt-secondary">학과 운영자 전용 통로입니다</p>
         </header>
 
         <form onSubmit={onSubmit} noValidate className="space-y-5">
           <div>
-            <label htmlFor="studentId" className="dt-caps mb-2 block">
-              학번
+            <label htmlFor="email" className="dt-caps mb-2 block">
+              이메일
             </label>
             <input
-              id="studentId"
-              type="text"
-              inputMode="numeric"
-              pattern="\d{7,8}"
-              maxLength={8}
-              autoComplete="username"
+              id="email"
+              type="email"
+              autoComplete="email"
               autoFocus
               required
-              placeholder="20261234"
-              value={studentId}
+              placeholder="admin@example.com"
+              value={email}
               onChange={(e) => {
-                setStudentId(sanitizeStudentId(e.target.value));
+                setEmail(e.target.value);
                 if (status.kind === "error") setStatus({ kind: "idle" });
               }}
               disabled={status.kind === "loading"}
@@ -146,19 +137,9 @@ function LoginPageInner() {
             disabled={status.kind === "loading"}
             className="dt-btn-card w-full"
           >
-            {status.kind === "loading" ? "로그인 중..." : "로그인"}
+            {status.kind === "loading" ? "로그인 중..." : "관리자 로그인"}
           </button>
         </form>
-
-        <p className="dt-meta mt-8 text-center">
-          처음 사용하시나요?{" "}
-          <Link href="/signup" className="dt-btn-text inline">
-            비밀번호 만들기
-          </Link>
-        </p>
-        <p className="dt-meta mt-2 text-center">
-          비밀번호를 잊으셨다면 학과 운영자에게 문의해 주세요
-        </p>
       </main>
     </div>
   );

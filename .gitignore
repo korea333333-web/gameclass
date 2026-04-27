@@ -48,3 +48,7 @@ next-env.d.ts
 # Tool results / temp
 /tmp/
 *.bin
+
+# 작업용 원본 자산 (web/public 으로 복사된 것만 커밋)
+/Gemini_Generated_Image_*.png
+/_design-reference/**/*.psd
