@@ -27,7 +27,6 @@ import {
 type Body = {
   studentId?: string;
   name?: string;
-  grade?: number;
   password?: string;
 };
 
@@ -41,7 +40,6 @@ export async function POST(request: NextRequest) {
 
   const studentId = (body.studentId ?? "").trim();
   const name = (body.name ?? "").trim();
-  const grade = Number(body.grade);
   const password = body.password ?? "";
 
   if (!isValidStudentId(studentId)) {
@@ -52,12 +50,6 @@ export async function POST(request: NextRequest) {
   }
   if (!isValidName(name)) {
     return NextResponse.json({ error: NAME_INVALID_ERROR }, { status: 400 });
-  }
-  if (![1, 2, 3, 4].includes(grade)) {
-    return NextResponse.json(
-      { error: "학년은 1~4 사이여야 합니다" },
-      { status: 400 },
-    );
   }
   const pwError = validatePassword(password);
   if (pwError) {
@@ -103,7 +95,7 @@ export async function POST(request: NextRequest) {
       email,
       password,
       email_confirm: true,
-      user_metadata: { student_id: studentId, name, grade },
+      user_metadata: { student_id: studentId, name },
     });
 
   if (createError || !created.user) {
@@ -122,7 +114,6 @@ export async function POST(request: NextRequest) {
     id: created.user.id,
     student_id: studentId,
     name,
-    grade,
     role: "student",
     is_active: false,
   });
@@ -139,7 +130,6 @@ export async function POST(request: NextRequest) {
       userId: created.user.id,
       studentId,
       name,
-      grade,
     });
   } catch (e) {
     console.error("[signup] telegram notify error", e);

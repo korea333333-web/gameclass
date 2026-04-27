@@ -27,11 +27,11 @@ export default async function HomePage() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("name, grade")
+    .select("name")
     .eq("id", user.id)
     .maybeSingle();
 
-  if (!profile || !profile.grade) redirect("/profile");
+  if (!profile) redirect("/profile");
 
   const [{ data: entries }, { data: tasks }, { data: memos }] = await Promise.all([
     supabase
@@ -91,7 +91,7 @@ export default async function HomePage() {
         <p className="dt-caps mb-2">GAMECLASS</p>
         <h1 className="dt-h1">{formatKoreanDate(today)}</h1>
         <p className="dt-secondary mt-1">
-          {profile.name}님, {profile.grade}학년 · 게임학과
+          {profile.name}님 · 게임학과
         </p>
       </header>
 

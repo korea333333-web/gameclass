@@ -50,6 +50,13 @@ export default async function AdminHomePage() {
             </p>
           </Link>
 
+          <Link href="/admin/students" className="dt-card block">
+            <p className="dt-task mb-1">가입 학생 관리 →</p>
+            <p className="dt-secondary">
+              가입한 학생 목록 보기, 학생 계정 삭제
+            </p>
+          </Link>
+
           <Link href="/admin/reset" className="dt-card block">
             <p className="dt-task mb-1">학생 비밀번호 리셋 →</p>
             <p className="dt-secondary">학생이 비번을 잊었을 때 임시 비번 발급</p>

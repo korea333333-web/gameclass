@@ -30,7 +30,6 @@ export default function SignupPage() {
   const [step, setStep] = useState<Step>("identity");
   const [studentId, setStudentId] = useState("");
   const [name, setName] = useState("");
-  const [grade, setGrade] = useState<number | null>(null);
   const [password, setPassword] = useState("");
   const [passwordConfirm, setPasswordConfirm] = useState("");
   const [status, setStatus] = useState<Status>({ kind: "idle" });
@@ -43,10 +42,6 @@ export default function SignupPage() {
     }
     if (!isValidName(name)) {
       setStatus({ kind: "error", message: NAME_INVALID_ERROR });
-      return;
-    }
-    if (grade === null || ![1, 2, 3, 4].includes(grade)) {
-      setStatus({ kind: "error", message: "학년을 선택해 주세요" });
       return;
     }
 
@@ -90,7 +85,6 @@ export default function SignupPage() {
       body: JSON.stringify({
         studentId: studentId.trim(),
         name: name.trim(),
-        grade,
         password,
       }),
     });
@@ -148,7 +142,7 @@ export default function SignupPage() {
           </h1>
           <p className="dt-secondary">
             {step === "identity"
-              ? "학번, 이름, 학년을 입력해 주세요"
+              ? "학번과 이름을 입력해 주세요"
               : `${studentId} ${name} 님 — 사용할 비밀번호를 정해 주세요`}
           </p>
         </header>
@@ -195,40 +189,6 @@ export default function SignupPage() {
                 className="dt-input"
                 required
               />
-            </div>
-
-            <div>
-              <span className="dt-caps mb-2 block">학년</span>
-              <div className="flex gap-2">
-                {[1, 2, 3, 4].map((g) => {
-                  const active = grade === g;
-                  return (
-                    <button
-                      key={g}
-                      type="button"
-                      onClick={() => {
-                        setGrade(g);
-                        if (status.kind === "error")
-                          setStatus({ kind: "idle" });
-                      }}
-                      disabled={status.kind === "loading"}
-                      className="dt-btn-card flex-1"
-                      style={{
-                        background: active
-                          ? "var(--color-surface-2)"
-                          : "var(--color-surface-3)",
-                        borderColor: active
-                          ? "var(--color-ink-3)"
-                          : "var(--hairline)",
-                        color: "var(--color-ink-1)",
-                      }}
-                      aria-pressed={active}
-                    >
-                      {g}학년
-                    </button>
-                  );
-                })}
-              </div>
             </div>
 
             {status.kind === "error" && (

@@ -14,7 +14,7 @@ export default async function ProfilePage() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("student_id, name, grade")
+    .select("student_id, name")
     .eq("id", user.id)
     .maybeSingle();
 
@@ -28,19 +28,13 @@ export default async function ProfilePage() {
     <main>
       <header className="mb-8">
         <p className="dt-caps mb-2">PROFILE</p>
-        <h1 className="dt-h1">{profile.grade ? "프로필" : "학년 선택"}</h1>
-        {!profile.grade && (
-          <p className="dt-secondary mt-1">
-            마지막으로 학년만 알려주시면 시작합니다
-          </p>
-        )}
+        <h1 className="dt-h1">프로필</h1>
       </header>
 
       <ProfileForm
         initialValues={{
           studentId: profile.student_id,
           name: profile.name,
-          grade: profile.grade,
         }}
       />
     </main>

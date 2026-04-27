@@ -54,14 +54,12 @@ type ApprovalArgs = {
   userId: string;
   studentId: string;
   name: string;
-  grade: number;
 };
 
 export async function sendApprovalRequest({
   userId,
   studentId,
   name,
-  grade,
 }: ApprovalArgs) {
   if (!isTelegramConfigured()) {
     console.warn("[telegram] not configured, skipping approval notify");
@@ -71,7 +69,6 @@ export async function sendApprovalRequest({
     "🆕 가입 신청",
     `학번: ${studentId}`,
     `이름: ${name}`,
-    `학년: ${grade}학년`,
     "",
     "본인 맞으면 승인, 모르는 사람이면 거절을 눌러 주세요.",
   ].join("\n");
