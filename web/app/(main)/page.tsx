@@ -1,6 +1,13 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import type { ColorKey, ScheduleEntry } from "@/lib/schedule";
+import type { Task, TaskLabel } from "@/lib/tasks";
+import { NextClassWidget } from "./_home/next-class-widget";
+import { TodayMiniList } from "./_home/today-mini-list";
+import { UpcomingTasks } from "./_home/upcoming-tasks";
+
+export const dynamic = "force-dynamic";
 
 function pad2(n: number) {
   return n.toString().padStart(2, "0");
@@ -15,8 +22,6 @@ export default async function HomePage() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-
-  // 인증/승인/어드민 체크는 (main)/layout에서 이미 처리됨
   if (!user) redirect("/login");
 
   const { data: profile } = await supabase
@@ -25,8 +30,45 @@ export default async function HomePage() {
     .eq("id", user.id)
     .maybeSingle();
 
-  // 가입 흐름에서 grade를 받으므로 비어있을 일은 없지만, 안전장치
   if (!profile || !profile.grade) redirect("/profile");
+
+  const [{ data: entries }, { data: tasks }] = await Promise.all([
+    supabase
+      .from("schedule_entries")
+      .select(
+        "id, name, day_of_week, start_minute, end_minute, location, professor, color",
+      )
+      .eq("user_id", user.id),
+    supabase
+      .from("tasks")
+      .select("id, title, due_at, schedule_entry_id, subject_label, label, memo, completed_at")
+      .eq("user_id", user.id)
+      .is("completed_at", null)
+      .order("due_at", { ascending: true })
+      .limit(3),
+  ]);
+
+  const scheduleEntries: ScheduleEntry[] = (entries ?? []).map((e) => ({
+    id: e.id as string,
+    name: e.name as string,
+    day_of_week: e.day_of_week as number,
+    start_minute: e.start_minute as number,
+    end_minute: e.end_minute as number,
+    location: (e.location as string | null) ?? null,
+    professor: (e.professor as string | null) ?? null,
+    color: (e.color as ColorKey) ?? "mustard",
+  }));
+
+  const upcomingTasks: Task[] = (tasks ?? []).map((t) => ({
+    id: t.id as string,
+    title: t.title as string,
+    due_at: t.due_at as string,
+    schedule_entry_id: (t.schedule_entry_id as string | null) ?? null,
+    subject_label: (t.subject_label as string | null) ?? null,
+    label: (t.label as TaskLabel) ?? "personal",
+    memo: (t.memo as string | null) ?? null,
+    completed_at: (t.completed_at as string | null) ?? null,
+  }));
 
   const today = new Date();
 
@@ -40,33 +82,11 @@ export default async function HomePage() {
         </p>
       </header>
 
-      <section aria-labelledby="next-class" className="dt-card mb-4">
-        <p id="next-class" className="dt-caps mb-3">
-          다음 수업
-        </p>
-        <p className="dt-task" style={{ color: "var(--color-ink-3)" }}>
-          아직 시간표가 비어 있습니다
-        </p>
-        <div className="mt-4">
-          <Link href="/schedule" className="dt-btn-text">
-            시간표 입력하러 가기 →
-          </Link>
-        </div>
-      </section>
+      <NextClassWidget entries={scheduleEntries} />
 
-      <section aria-labelledby="upcoming-tasks" className="dt-card mb-4">
-        <p id="upcoming-tasks" className="dt-caps mb-3">
-          임박 과제
-        </p>
-        <p className="dt-task" style={{ color: "var(--color-ink-3)" }}>
-          등록된 과제가 없습니다
-        </p>
-        <div className="mt-4">
-          <Link href="/tasks" className="dt-btn-text">
-            과제 추가하러 가기 →
-          </Link>
-        </div>
-      </section>
+      <TodayMiniList entries={scheduleEntries} />
+
+      <UpcomingTasks tasks={upcomingTasks} />
 
       <section aria-labelledby="active-team" className="dt-card mb-4">
         <p id="active-team" className="dt-caps mb-3">

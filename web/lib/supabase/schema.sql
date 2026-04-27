@@ -228,3 +228,192 @@ drop trigger if exists roster_updated_at on public.roster;
 create trigger roster_updated_at
   before update on public.roster
   for each row execute function public.handle_updated_at();
+
+-- =========================================================================
+-- Sprint 2: 시간표 + 과제 + 공유 코드
+-- =========================================================================
+
+-- -------------------------------------------------------------------------
+-- 8. schedule_entries — 시간표 항목 (사용자별)
+-- -------------------------------------------------------------------------
+create table if not exists public.schedule_entries (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  name text not null check (char_length(name) between 1 and 30),
+  day_of_week smallint not null check (day_of_week between 1 and 5),
+  start_minute smallint not null check (start_minute between 540 and 1320),
+  end_minute smallint not null check (end_minute between 570 and 1320),
+  location text check (location is null or char_length(location) <= 30),
+  professor text check (professor is null or char_length(professor) <= 20),
+  color text not null default 'mustard'
+    check (color in ('brick','mustard','olive','slate','mauve','terracotta','ink')),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  constraint schedule_entries_time_order check (start_minute < end_minute)
+);
+
+create index if not exists schedule_entries_user_idx
+  on public.schedule_entries(user_id);
+
+alter table public.schedule_entries enable row level security;
+
+drop policy if exists "Users manage own schedule entries" on public.schedule_entries;
+create policy "Users manage own schedule entries"
+  on public.schedule_entries for all
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
+drop trigger if exists schedule_entries_updated_at on public.schedule_entries;
+create trigger schedule_entries_updated_at
+  before update on public.schedule_entries
+  for each row execute function public.handle_updated_at();
+
+-- -------------------------------------------------------------------------
+-- 9. share_codes — 시간표 공유 코드 (사용자당 1개)
+-- -------------------------------------------------------------------------
+create table if not exists public.share_codes (
+  code text primary key check (char_length(code) = 6),
+  user_id uuid not null unique references auth.users(id) on delete cascade,
+  created_at timestamptz not null default now()
+);
+
+alter table public.share_codes enable row level security;
+
+drop policy if exists "Users see own share code" on public.share_codes;
+create policy "Users see own share code"
+  on public.share_codes for select
+  using (auth.uid() = user_id);
+
+drop policy if exists "Users delete own share code" on public.share_codes;
+create policy "Users delete own share code"
+  on public.share_codes for delete
+  using (auth.uid() = user_id);
+
+-- -------------------------------------------------------------------------
+-- 10. generate_share_code RPC — 본인 공유 코드 발급(있으면 재사용)
+--     혼동 글자 0/O/1/I 제외한 31개 문자에서 6자리 랜덤
+-- -------------------------------------------------------------------------
+create or replace function public.generate_share_code()
+returns text
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_chars text := 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+  v_code text;
+  v_existing text;
+  v_i int;
+  v_attempt int;
+begin
+  if v_uid is null then
+    raise exception 'unauthenticated';
+  end if;
+
+  select code into v_existing from public.share_codes where user_id = v_uid;
+  if v_existing is not null then
+    return v_existing;
+  end if;
+
+  for v_attempt in 1..10 loop
+    v_code := '';
+    for v_i in 1..6 loop
+      v_code := v_code || substr(v_chars, 1 + floor(random() * length(v_chars))::int, 1);
+    end loop;
+
+    begin
+      insert into public.share_codes (code, user_id) values (v_code, v_uid);
+      return v_code;
+    exception when unique_violation then
+      -- 충돌, 재시도
+    end;
+  end loop;
+
+  raise exception 'code_generation_failed';
+end;
+$$;
+
+revoke all on function public.generate_share_code() from public;
+grant execute on function public.generate_share_code() to authenticated;
+
+-- -------------------------------------------------------------------------
+-- 11. copy_schedule_from_code RPC — 코드로 다른 사용자 시간표 복사
+--     본인 기존 시간표는 삭제 후 덮어씀
+-- -------------------------------------------------------------------------
+create or replace function public.copy_schedule_from_code(p_code text)
+returns int
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_source uuid;
+  v_count int;
+begin
+  if v_uid is null then
+    raise exception 'unauthenticated';
+  end if;
+
+  select user_id into v_source
+  from public.share_codes
+  where code = upper(p_code);
+
+  if v_source is null then
+    raise exception 'invalid_code';
+  end if;
+
+  if v_source = v_uid then
+    raise exception 'own_code';
+  end if;
+
+  delete from public.schedule_entries where user_id = v_uid;
+
+  insert into public.schedule_entries
+    (user_id, name, day_of_week, start_minute, end_minute, location, professor, color)
+  select v_uid, name, day_of_week, start_minute, end_minute, location, professor, color
+  from public.schedule_entries
+  where user_id = v_source;
+
+  get diagnostics v_count = row_count;
+  return v_count;
+end;
+$$;
+
+revoke all on function public.copy_schedule_from_code(text) from public;
+grant execute on function public.copy_schedule_from_code(text) to authenticated;
+
+-- -------------------------------------------------------------------------
+-- 12. tasks — 과제 To-do
+-- -------------------------------------------------------------------------
+create table if not exists public.tasks (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  title text not null check (char_length(title) between 1 and 100),
+  due_at timestamptz not null,
+  schedule_entry_id uuid references public.schedule_entries(id) on delete set null,
+  subject_label text check (subject_label is null or char_length(subject_label) <= 30),
+  label text not null default 'personal'
+    check (label in ('personal','team','exam','presentation','quiz')),
+  memo text check (memo is null or char_length(memo) <= 500),
+  completed_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists tasks_user_due_idx
+  on public.tasks(user_id, due_at);
+
+alter table public.tasks enable row level security;
+
+drop policy if exists "Users manage own tasks" on public.tasks;
+create policy "Users manage own tasks"
+  on public.tasks for all
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
+drop trigger if exists tasks_updated_at on public.tasks;
+create trigger tasks_updated_at
+  before update on public.tasks
+  for each row execute function public.handle_updated_at();
