@@ -8,6 +8,7 @@
 -- 안전성:
 --   - 모든 객체는 IF NOT EXISTS / OR REPLACE / DROP IF EXISTS 패턴
 --   - 여러 번 실행해도 안전 (멱등성)
+--   - 기존 테이블에도 누락 컬럼/제약을 알아서 추가
 -- =========================================================================
 
 -- -------------------------------------------------------------------------
@@ -25,25 +26,73 @@ alter table public.roster enable row level security;
 
 -- -------------------------------------------------------------------------
 -- 2. profiles — 가입한 사용자(학생 + 어드민)
---    학번/이름은 roster에서 자동 채워짐, 학년만 학생 본인이 입력
---    role 컬럼으로 어드민 분리
 -- -------------------------------------------------------------------------
 create table if not exists public.profiles (
   id uuid references auth.users(id) on delete cascade primary key,
-  student_id text unique check (student_id ~ '^\d{7,8}$'),
-  name text check (char_length(name) between 2 and 10),
-  grade smallint check (grade between 1 and 4),
-  role text not null default 'student' check (role in ('student', 'admin')),
+  student_id text unique,
+  name text,
+  grade smallint,
+  role text not null default 'student',
   is_active boolean not null default false,
   avatar_url text,
-  xp integer not null default 0 check (xp >= 0),
+  xp integer not null default 0,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
 
--- 기존 테이블에 컬럼이 없으면 추가 (멱등)
+-- 기존 테이블에 누락 컬럼 추가 (멱등)
 alter table public.profiles
-  add column if not exists is_active boolean not null default false;
+  add column if not exists student_id text,
+  add column if not exists name text,
+  add column if not exists grade smallint,
+  add column if not exists role text not null default 'student',
+  add column if not exists is_active boolean not null default false,
+  add column if not exists avatar_url text,
+  add column if not exists xp integer not null default 0;
+
+-- 어드민은 학번/이름/학년 비어도 되도록 NOT NULL 제거
+alter table public.profiles
+  alter column student_id drop not null,
+  alter column name drop not null,
+  alter column grade drop not null;
+
+-- 제약 정리 — 기존 옛 제약을 떼고 새 제약으로 일관 적용
+alter table public.profiles drop constraint if exists profiles_student_id_check;
+alter table public.profiles
+  add constraint profiles_student_id_check
+    check (student_id is null or student_id ~ '^\d{7,8}$');
+
+alter table public.profiles drop constraint if exists profiles_name_check;
+alter table public.profiles
+  add constraint profiles_name_check
+    check (name is null or char_length(name) between 2 and 10);
+
+alter table public.profiles drop constraint if exists profiles_grade_check;
+alter table public.profiles
+  add constraint profiles_grade_check
+    check (grade is null or grade between 1 and 4);
+
+alter table public.profiles drop constraint if exists profiles_role_check;
+alter table public.profiles
+  add constraint profiles_role_check
+    check (role in ('student', 'admin'));
+
+alter table public.profiles drop constraint if exists profiles_xp_check;
+alter table public.profiles
+  add constraint profiles_xp_check check (xp >= 0);
+
+-- student_id unique 보장 (이미 있으면 무시)
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint
+    where conrelid = 'public.profiles'::regclass
+      and conname = 'profiles_student_id_key'
+  ) then
+    alter table public.profiles
+      add constraint profiles_student_id_key unique (student_id);
+  end if;
+end $$;
 
 alter table public.profiles enable row level security;
 
@@ -108,7 +157,6 @@ create policy "Admins manage roster"
 -- -------------------------------------------------------------------------
 -- 6. verify_roster RPC — 가입 시 학번+이름 매칭 확인 (anon 호출 가능)
 --    SECURITY DEFINER로 roster RLS 우회, 결과는 boolean만 반환
---    → 명단 자체는 노출되지 않음
 -- -------------------------------------------------------------------------
 create or replace function public.verify_roster(
   p_student_id text,
@@ -130,14 +178,7 @@ revoke all on function public.verify_roster(text, text) from public;
 grant execute on function public.verify_roster(text, text) to anon, authenticated;
 
 -- -------------------------------------------------------------------------
--- 7. handle_new_student RPC — 가입 직후 profiles 자동 생성
---    학번/이름은 roster에서 가져와 자동 채움
---    호출자는 인증된 본인만 가능
--- -------------------------------------------------------------------------
--- (handle_new_student RPC는 더 이상 사용하지 않습니다 — signup API route에서 직접 처리)
-
--- -------------------------------------------------------------------------
--- 8. updated_at 자동 갱신 트리거
+-- 7. updated_at 자동 갱신 트리거
 -- -------------------------------------------------------------------------
 create or replace function public.handle_updated_at()
 returns trigger language plpgsql as $$
@@ -156,10 +197,3 @@ drop trigger if exists roster_updated_at on public.roster;
 create trigger roster_updated_at
   before update on public.roster
   for each row execute function public.handle_updated_at();
-
--- -------------------------------------------------------------------------
--- 9. (선택) 학번 → 이메일 매핑 함수
---    학번을 가짜 이메일로 변환하는 일관된 규칙 (클라이언트에서도 같이 사용)
---    ex) 2026038001 → 2026038001@gameclass.local
--- -------------------------------------------------------------------------
--- (DB 함수로 만들지 않고 클라이언트에서 단순 문자열 조합으로 처리)
