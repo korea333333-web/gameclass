@@ -7,23 +7,20 @@ import {
   COLORS,
   DAY_LABELS,
   FIRST_DAY,
-  GRID_END_MINUTE,
-  GRID_START_MINUTE,
   LAST_DAY,
-  SLOT_MINUTES,
-  minutesToHHMM,
+  PERIODS,
+  PERIOD_MINUTES,
+  GRID_START_MINUTE,
   type ScheduleEntry,
 } from "@/lib/schedule";
 import { EntryForm } from "./entry-form";
 import { ShareSection } from "./share-section";
 
-const HOUR_ROWS = Math.floor(
-  (GRID_END_MINUTE - GRID_START_MINUTE) / SLOT_MINUTES,
-);
+const GRID_HEADER_ROW = 1;
 
 type ModalState =
   | { kind: "closed" }
-  | { kind: "new"; day: number; startMinute: number }
+  | { kind: "new"; day: number; periodIndex: number }
   | { kind: "edit"; entry: ScheduleEntry };
 
 export function ScheduleClient({
@@ -39,8 +36,8 @@ export function ScheduleClient({
 
   const supabase = useMemo(() => createClient(), []);
 
-  function openNew(day: number, startMinute: number) {
-    setModal({ kind: "new", day, startMinute });
+  function openNew(day: number, periodIndex: number) {
+    setModal({ kind: "new", day, periodIndex });
   }
 
   function openEdit(entry: ScheduleEntry) {
@@ -54,7 +51,6 @@ export function ScheduleClient({
   async function onSave(input: Omit<ScheduleEntry, "id"> & { id?: string }) {
     const { id, ...payload } = input;
     if (id) {
-      // 수정
       const { data, error } = await supabase
         .from("schedule_entries")
         .update(payload)
@@ -71,7 +67,6 @@ export function ScheduleClient({
         prev.map((e) => (e.id === id ? (data as ScheduleEntry) : e)),
       );
     } else {
-      // 신규
       const {
         data: { user },
       } = await supabase.auth.getUser();
@@ -115,18 +110,12 @@ export function ScheduleClient({
 
   return (
     <>
-      {/* 데스크톱: 그리드 / 모바일: 일별 리스트 */}
-      <div className="hidden md:block">
-        <DesktopGrid entries={entries} onClickEmpty={openNew} onClickEntry={openEdit} />
-      </div>
-      <div className="md:hidden">
-        <MobileDayList entries={entries} onClickEmpty={openNew} onClickEntry={openEdit} />
-      </div>
+      <ScheduleGrid entries={entries} onClickEmpty={openNew} onClickEntry={openEdit} />
 
       <div className="mt-8">
         <button
           type="button"
-          onClick={() => openNew(1, 9 * 60)}
+          onClick={() => openNew(1, 1)}
           className="dt-btn-card w-full"
         >
           + 과목 추가
@@ -147,11 +136,12 @@ export function ScheduleClient({
               ? modal.entry
               : {
                   day_of_week: modal.day,
-                  start_minute: modal.startMinute,
-                  end_minute: Math.min(
-                    modal.startMinute + 60,
-                    GRID_END_MINUTE,
-                  ),
+                  start_minute:
+                    PERIODS[Math.max(0, Math.min(PERIODS.length - 1, modal.periodIndex))]
+                      .startMinute,
+                  end_minute:
+                    PERIODS[Math.max(0, Math.min(PERIODS.length - 1, modal.periodIndex))]
+                      .endMinute,
                 }
           }
           existingEntries={entries}
@@ -165,40 +155,46 @@ export function ScheduleClient({
 }
 
 // ────────────────────────────────────────────────────────────────────────
-// Desktop grid view (월~금 가로, 9시~22시 세로)
+// 학교 시간표 형태 그리드 (월~금 가로 / 0교시~13교시 세로)
+// 각 행 = 1교시 = 60분
+// 모바일/데스크톱 모두 동일한 그리드 (모바일에서는 셀이 좁아짐)
 // ────────────────────────────────────────────────────────────────────────
-function DesktopGrid({
+function ScheduleGrid({
   entries,
   onClickEmpty,
   onClickEntry,
 }: {
   entries: ScheduleEntry[];
-  onClickEmpty: (day: number, startMinute: number) => void;
+  onClickEmpty: (day: number, periodIndex: number) => void;
   onClickEntry: (entry: ScheduleEntry) => void;
 }) {
-  // 시간 라벨 (정시만)
-  const hours: number[] = [];
-  for (let h = 9; h <= 22; h++) hours.push(h);
-
   return (
     <div
       className="dt-card overflow-hidden"
       style={{
         display: "grid",
-        gridTemplateColumns: "60px repeat(5, 1fr)",
-        gridTemplateRows: `28px repeat(${HOUR_ROWS}, 24px)`,
+        gridTemplateColumns: "minmax(54px, 78px) repeat(5, 1fr)",
+        gridTemplateRows: `34px repeat(${PERIODS.length}, 52px)`,
         gap: 0,
+        padding: 0,
       }}
     >
-      {/* 헤더 */}
-      <div></div>
+      {/* 좌상단 빈 칸 */}
+      <div
+        style={{
+          borderBottom: "1px solid var(--hairline)",
+          borderRight: "1px solid var(--hairline)",
+        }}
+      />
+
+      {/* 요일 헤더 */}
       {DAY_LABELS.map((d) => (
         <div
           key={d}
           className="dt-caps text-center"
           style={{
             color: "var(--color-ink-2)",
-            paddingTop: 6,
+            paddingTop: 10,
             borderBottom: "1px solid var(--hairline)",
           }}
         >
@@ -206,45 +202,61 @@ function DesktopGrid({
         </div>
       ))}
 
-      {/* 시간 라벨 + 셀 */}
-      {hours.map((h, hourIdx) => {
-        const slotsPerHour = 60 / SLOT_MINUTES;
-        return (
+      {/* 교시 라벨 (왼쪽 첫 열) */}
+      {PERIODS.map((p, idx) => (
+        <div
+          key={`label-${p.index}`}
+          style={{
+            gridColumn: 1,
+            gridRow: GRID_HEADER_ROW + 1 + idx,
+            borderRight: "1px solid var(--hairline)",
+            borderTop:
+              idx === 0 ? "none" : "1px solid var(--hairline)",
+            padding: "6px 8px",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            alignItems: "flex-end",
+            textAlign: "right",
+          }}
+        >
           <div
-            key={h}
-            className="dt-meta"
             style={{
-              gridColumn: 1,
-              gridRow: `${2 + hourIdx * slotsPerHour} / span ${slotsPerHour}`,
-              color: "var(--color-ink-3)",
-              paddingRight: 6,
-              textAlign: "right",
-              borderRight: "1px solid var(--hairline)",
+              fontSize: 12,
+              fontWeight: 500,
+              color: "var(--color-ink-1)",
             }}
           >
-            {String(h).padStart(2, "0")}
+            {p.label}
           </div>
-        );
-      })}
+          <div
+            className="dt-mono"
+            style={{
+              fontSize: 11,
+              color: "var(--color-ink-3)",
+              marginTop: 1,
+            }}
+          >
+            {p.startLabel}~{p.endLabel}
+          </div>
+        </div>
+      ))}
 
-      {/* 빈 슬롯 (클릭 영역) */}
-      {Array.from({ length: HOUR_ROWS }).map((_, rowIdx) =>
+      {/* 빈 셀 (교시 × 요일) */}
+      {PERIODS.map((p, periodIdx) =>
         Array.from({ length: LAST_DAY }).map((_, dayIdx) => {
           const day = dayIdx + FIRST_DAY;
-          const startMinute = GRID_START_MINUTE + rowIdx * SLOT_MINUTES;
-          const isHourMark = startMinute % 60 === 0;
           return (
             <button
-              key={`slot-${rowIdx}-${dayIdx}`}
+              key={`slot-${periodIdx}-${dayIdx}`}
               type="button"
-              onClick={() => onClickEmpty(day, startMinute)}
-              aria-label={`${DAY_LABELS[dayIdx]} ${minutesToHHMM(startMinute)} 추가`}
+              onClick={() => onClickEmpty(day, p.index)}
+              aria-label={`${DAY_LABELS[dayIdx]} ${p.label} 추가`}
               style={{
                 gridColumn: dayIdx + 2,
-                gridRow: rowIdx + 2,
-                borderTop: isHourMark
-                  ? "1px solid var(--hairline)"
-                  : "1px dashed transparent",
+                gridRow: GRID_HEADER_ROW + 1 + periodIdx,
+                borderTop:
+                  periodIdx === 0 ? "none" : "1px solid var(--hairline)",
                 borderRight:
                   dayIdx < LAST_DAY - 1
                     ? "1px solid var(--hairline)"
@@ -261,10 +273,14 @@ function DesktopGrid({
       {/* 과목 카드 */}
       {entries.map((e) => {
         const c = COLORS[e.color];
-        const startRow =
-          Math.floor((e.start_minute - GRID_START_MINUTE) / SLOT_MINUTES) + 2;
-        const endRow =
-          Math.floor((e.end_minute - GRID_START_MINUTE) / SLOT_MINUTES) + 2;
+        const startPeriodIdx = Math.floor(
+          (e.start_minute - GRID_START_MINUTE) / PERIOD_MINUTES,
+        );
+        const endPeriodIdx = Math.ceil(
+          (e.end_minute - GRID_START_MINUTE) / PERIOD_MINUTES,
+        );
+        const startRow = GRID_HEADER_ROW + 1 + startPeriodIdx;
+        const endRow = GRID_HEADER_ROW + 1 + endPeriodIdx;
         return (
           <button
             key={e.id}
@@ -276,25 +292,47 @@ function DesktopGrid({
               background: c.bg,
               borderLeft: `3px solid ${c.border}`,
               color: c.text,
-              padding: "4px 6px",
-              margin: 1,
+              padding: "4px 5px",
+              margin: 2,
               borderRadius: 6,
-              fontSize: 12,
+              fontSize: 11,
               fontWeight: 500,
               textAlign: "left",
               overflow: "hidden",
               cursor: "pointer",
-              lineHeight: 1.2,
+              lineHeight: 1.25,
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "flex-start",
+              wordBreak: "break-word",
             }}
             aria-label={`${e.name} 수정`}
           >
-            <div style={{ fontWeight: 600 }}>{e.name}</div>
-            {e.location && (
-              <div style={{ opacity: 0.8, fontSize: 11 }}>{e.location}</div>
-            )}
-            <div style={{ opacity: 0.6, fontSize: 11 }}>
-              {minutesToHHMM(e.start_minute)}–{minutesToHHMM(e.end_minute)}
+            <div
+              style={{
+                fontWeight: 600,
+                overflow: "hidden",
+                display: "-webkit-box",
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: "vertical",
+              }}
+            >
+              {e.name}
             </div>
+            {e.location && (
+              <div
+                style={{
+                  opacity: 0.8,
+                  fontSize: 10,
+                  marginTop: 1,
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {e.location}
+              </div>
+            )}
           </button>
         );
       })}
@@ -302,79 +340,3 @@ function DesktopGrid({
   );
 }
 
-// ────────────────────────────────────────────────────────────────────────
-// Mobile: 요일별 리스트
-// ────────────────────────────────────────────────────────────────────────
-function MobileDayList({
-  entries,
-  onClickEmpty,
-  onClickEntry,
-}: {
-  entries: ScheduleEntry[];
-  onClickEmpty: (day: number, startMinute: number) => void;
-  onClickEntry: (entry: ScheduleEntry) => void;
-}) {
-  return (
-    <div className="space-y-4">
-      {DAY_LABELS.map((label, idx) => {
-        const day = idx + FIRST_DAY;
-        const dayEntries = entries
-          .filter((e) => e.day_of_week === day)
-          .sort((a, b) => a.start_minute - b.start_minute);
-        return (
-          <section key={day} className="dt-card">
-            <p className="dt-caps mb-3">{label}요일</p>
-            {dayEntries.length === 0 ? (
-              <button
-                type="button"
-                onClick={() => onClickEmpty(day, GRID_START_MINUTE)}
-                className="dt-btn-text"
-              >
-                + 과목 추가
-              </button>
-            ) : (
-              <ul className="space-y-2">
-                {dayEntries.map((e) => {
-                  const c = COLORS[e.color];
-                  return (
-                    <li key={e.id}>
-                      <button
-                        type="button"
-                        onClick={() => onClickEntry(e)}
-                        style={{
-                          display: "flex",
-                          width: "100%",
-                          alignItems: "center",
-                          gap: 10,
-                          background: c.bg,
-                          borderLeft: `3px solid ${c.border}`,
-                          color: c.text,
-                          padding: "10px 12px",
-                          borderRadius: 8,
-                          textAlign: "left",
-                        }}
-                      >
-                        <span
-                          className="dt-mono"
-                          style={{ minWidth: 88, fontSize: 12, opacity: 0.7 }}
-                        >
-                          {minutesToHHMM(e.start_minute)}–{minutesToHHMM(e.end_minute)}
-                        </span>
-                        <span style={{ fontWeight: 600 }}>{e.name}</span>
-                        {e.location && (
-                          <span style={{ opacity: 0.7, fontSize: 12 }}>
-                            · {e.location}
-                          </span>
-                        )}
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-          </section>
-        );
-      })}
-    </div>
-  );
-}

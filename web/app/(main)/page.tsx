@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import type { ColorKey, ScheduleEntry } from "@/lib/schedule";
 import type { Task, TaskLabel } from "@/lib/tasks";
 import { NextClassWidget } from "./_home/next-class-widget";
+import { QuickMemos, type QuickMemo } from "./_home/quick-memos";
 import { TodayMiniList } from "./_home/today-mini-list";
 import { UpcomingTasks } from "./_home/upcoming-tasks";
 
@@ -32,7 +33,7 @@ export default async function HomePage() {
 
   if (!profile || !profile.grade) redirect("/profile");
 
-  const [{ data: entries }, { data: tasks }] = await Promise.all([
+  const [{ data: entries }, { data: tasks }, { data: memos }] = await Promise.all([
     supabase
       .from("schedule_entries")
       .select(
@@ -46,6 +47,12 @@ export default async function HomePage() {
       .is("completed_at", null)
       .order("due_at", { ascending: true })
       .limit(3),
+    supabase
+      .from("quick_memos")
+      .select("id, content, completed_at")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(50),
   ]);
 
   const scheduleEntries: ScheduleEntry[] = (entries ?? []).map((e) => ({
@@ -70,6 +77,12 @@ export default async function HomePage() {
     completed_at: (t.completed_at as string | null) ?? null,
   }));
 
+  const initialMemos: QuickMemo[] = (memos ?? []).map((m) => ({
+    id: m.id as string,
+    content: m.content as string,
+    completed_at: (m.completed_at as string | null) ?? null,
+  }));
+
   const today = new Date();
 
   return (
@@ -85,6 +98,8 @@ export default async function HomePage() {
       <NextClassWidget entries={scheduleEntries} />
 
       <TodayMiniList entries={scheduleEntries} />
+
+      <QuickMemos initialMemos={initialMemos} />
 
       <UpcomingTasks tasks={upcomingTasks} />
 

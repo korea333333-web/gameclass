@@ -417,3 +417,32 @@ drop trigger if exists tasks_updated_at on public.tasks;
 create trigger tasks_updated_at
   before update on public.tasks
   for each row execute function public.handle_updated_at();
+
+-- -------------------------------------------------------------------------
+-- 13. quick_memos — 홈 화면용 한 줄 메모 (마감일 없음)
+--     입력 → Enter → 체크 시 줄 → 삭제 (TickTick/노션 체크리스트 스타일)
+-- -------------------------------------------------------------------------
+create table if not exists public.quick_memos (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  content text not null check (char_length(content) between 1 and 200),
+  completed_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists quick_memos_user_idx
+  on public.quick_memos(user_id, created_at desc);
+
+alter table public.quick_memos enable row level security;
+
+drop policy if exists "Users manage own memos" on public.quick_memos;
+create policy "Users manage own memos"
+  on public.quick_memos for all
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
+drop trigger if exists quick_memos_updated_at on public.quick_memos;
+create trigger quick_memos_updated_at
+  before update on public.quick_memos
+  for each row execute function public.handle_updated_at();

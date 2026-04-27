@@ -6,11 +6,12 @@ import {
   COLOR_KEYS,
   DAY_LABELS,
   FIRST_DAY,
-  endTimeOptions,
+  PERIODS,
   findConflict,
-  hhmmToMinutes,
   minutesToHHMM,
-  timeOptions,
+  minuteToPeriodIndex,
+  periodEndMinute,
+  periodStartMinute,
   type ColorKey,
   type ScheduleEntry,
 } from "@/lib/schedule";
@@ -45,11 +46,16 @@ export function EntryForm({
 }) {
   const [name, setName] = useState(initial.name ?? "");
   const [day, setDay] = useState<number>(initial.day_of_week ?? FIRST_DAY);
-  const [startTime, setStartTime] = useState(
-    minutesToHHMM(initial.start_minute ?? 9 * 60),
+  const [startPeriod, setStartPeriod] = useState<number>(
+    initial.start_minute !== undefined
+      ? minuteToPeriodIndex(initial.start_minute)
+      : 1,
   );
-  const [endTime, setEndTime] = useState(
-    minutesToHHMM(initial.end_minute ?? 10 * 60 + 30),
+  const [endPeriod, setEndPeriod] = useState<number>(
+    initial.end_minute !== undefined
+      ? // end_minute은 50분 후 시점이므로 -1분으로 보정해서 마지막 교시 인덱스
+        minuteToPeriodIndex(initial.end_minute - 1)
+      : 1,
   );
   const [location, setLocation] = useState(initial.location ?? "");
   const [professor, setProfessor] = useState(initial.professor ?? "");
@@ -67,16 +73,13 @@ export function EntryForm({
       setError("과목명은 1~30자여야 합니다");
       return { ok: false };
     }
-    const startM = hhmmToMinutes(startTime);
-    const endM = hhmmToMinutes(endTime);
-    if (startM === null || endM === null) {
-      setError("시간 형식이 올바르지 않습니다");
+    if (endPeriod < startPeriod) {
+      setError("종료 교시는 시작 교시 이상이어야 합니다");
       return { ok: false };
     }
-    if (endM <= startM) {
-      setError("종료 시간은 시작 시간보다 뒤여야 합니다");
-      return { ok: false };
-    }
+
+    const startM = periodStartMinute(startPeriod);
+    const endM = periodEndMinute(endPeriod);
 
     const conflict = findConflict(existingEntries, day, startM, endM, initial.id);
     if (conflict) {
@@ -134,7 +137,7 @@ export function EntryForm({
         className="dt-card"
         style={{
           width: "100%",
-          maxWidth: 420,
+          maxWidth: 440,
           maxHeight: "90vh",
           overflowY: "auto",
           background: "var(--color-surface-4)",
@@ -197,39 +200,48 @@ export function EntryForm({
           <div className="flex gap-3">
             <div className="flex-1">
               <label htmlFor="ef-start" className="dt-caps mb-2 block">
-                시작
+                시작 교시
               </label>
               <select
                 id="ef-start"
-                value={startTime}
-                onChange={(e) => setStartTime(e.target.value)}
+                value={String(startPeriod)}
+                onChange={(e) => {
+                  const v = Number(e.target.value);
+                  setStartPeriod(v);
+                  if (endPeriod < v) setEndPeriod(v);
+                }}
                 className="dt-input"
               >
-                {timeOptions().map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.value}
+                {PERIODS.map((p) => (
+                  <option key={p.index} value={String(p.index)}>
+                    {p.label} ({p.startLabel})
                   </option>
                 ))}
               </select>
             </div>
             <div className="flex-1">
               <label htmlFor="ef-end" className="dt-caps mb-2 block">
-                종료
+                종료 교시
               </label>
               <select
                 id="ef-end"
-                value={endTime}
-                onChange={(e) => setEndTime(e.target.value)}
+                value={String(endPeriod)}
+                onChange={(e) => setEndPeriod(Number(e.target.value))}
                 className="dt-input"
               >
-                {endTimeOptions().map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.value}
+                {PERIODS.filter((p) => p.index >= startPeriod).map((p) => (
+                  <option key={p.index} value={String(p.index)}>
+                    {p.label} ({p.endLabel})
                   </option>
                 ))}
               </select>
             </div>
           </div>
+
+          <p className="dt-meta" style={{ color: "var(--color-ink-3)" }}>
+            {minutesToHHMM(periodStartMinute(startPeriod))} ~{" "}
+            {minutesToHHMM(periodEndMinute(endPeriod))}
+          </p>
 
           <div>
             <label htmlFor="ef-location" className="dt-caps mb-2 block">

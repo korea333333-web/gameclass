@@ -8,12 +8,66 @@ export const DAY_LABELS_FULL = ["월요일", "화요일", "수요일", "목요�
 export const FIRST_DAY = 1;
 export const LAST_DAY = 5;
 
-// 그리드 시간 범위
-export const GRID_START_MINUTE = 9 * 60; // 09:00
-export const GRID_END_MINUTE = 22 * 60; // 22:00
+// 그리드 시간 범위 — 학교 교시 기준 (0교시 08:00 ~ 13교시 21:50)
+export const GRID_START_MINUTE = 8 * 60; // 08:00 (0교시 시작)
+export const GRID_END_MINUTE = 22 * 60; // 22:00 (13교시 끝 직후)
 
-// 30분 단위
-export const SLOT_MINUTES = 30;
+// 한 교시 = 50분 수업 + 10분 쉬는 시간 = 60분 슬롯
+export const PERIOD_MINUTES = 60; // 행 단위
+export const PERIOD_DURATION = 50; // 실제 수업 길이
+
+// 호환성: SLOT_MINUTES는 분 단위 변환에 여전히 사용
+export const SLOT_MINUTES = PERIOD_MINUTES;
+
+// 교시 정의 — 0교시~13교시 (총 14교시)
+export type Period = {
+  index: number; // 0=0교시, 1=1교시, ..., 13=13교시
+  label: string; // "0교시", "1교시", ...
+  startMinute: number;
+  endMinute: number; // 수업이 실제 끝나는 시각 (50분 후)
+  startLabel: string; // "08:00"
+  endLabel: string; // "08:50"
+};
+
+export const PERIODS: Period[] = Array.from({ length: 14 }).map((_, i) => {
+  const startMinute = GRID_START_MINUTE + i * PERIOD_MINUTES;
+  const endMinute = startMinute + PERIOD_DURATION;
+  return {
+    index: i,
+    label: `${i}교시`,
+    startMinute,
+    endMinute,
+    startLabel: minutesToHHMMRaw(startMinute),
+    endLabel: minutesToHHMMRaw(endMinute),
+  };
+});
+
+function minutesToHHMMRaw(min: number): string {
+  const h = Math.floor(min / 60);
+  const m = min % 60;
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+}
+
+// 분 → 가장 가까운 교시 인덱스 (시작 시각 기준)
+export function minuteToPeriodIndex(minute: number): number {
+  return Math.max(
+    0,
+    Math.min(
+      PERIODS.length - 1,
+      Math.floor((minute - GRID_START_MINUTE) / PERIOD_MINUTES),
+    ),
+  );
+}
+
+// 교시 인덱스 → 시작 분
+export function periodStartMinute(index: number): number {
+  return PERIODS[Math.max(0, Math.min(PERIODS.length - 1, index))].startMinute;
+}
+
+// 교시 인덱스 → 수업 종료 분 (50분 수업)
+export function periodEndMinute(index: number): number {
+  return PERIODS[Math.max(0, Math.min(PERIODS.length - 1, index))].endMinute;
+}
 
 export type ColorKey =
   | "brick"
@@ -69,21 +123,12 @@ export function hhmmToMinutes(hhmm: string): number | null {
   return h * 60 + mm;
 }
 
-// 시작 시간 옵션 (09:00, 09:30, ..., 21:30)
-export function timeOptions(): { value: string; minute: number }[] {
-  const opts: { value: string; minute: number }[] = [];
-  for (let m = GRID_START_MINUTE; m <= GRID_END_MINUTE - SLOT_MINUTES; m += SLOT_MINUTES) {
-    opts.push({ value: minutesToHHMM(m), minute: m });
-  }
-  return opts;
-}
-
-export function endTimeOptions(): { value: string; minute: number }[] {
-  const opts: { value: string; minute: number }[] = [];
-  for (let m = GRID_START_MINUTE + SLOT_MINUTES; m <= GRID_END_MINUTE; m += SLOT_MINUTES) {
-    opts.push({ value: minutesToHHMM(m), minute: m });
-  }
-  return opts;
+// 교시 단위 옵션 (시작 교시 / 종료 교시 선택용)
+export function periodOptions(): { value: string; period: Period }[] {
+  return PERIODS.map((p) => ({
+    value: String(p.index),
+    period: p,
+  }));
 }
 
 export type ScheduleEntry = {
